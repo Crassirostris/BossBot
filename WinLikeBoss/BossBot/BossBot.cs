@@ -118,11 +118,17 @@ namespace BossBot
         private double GetDistanceToWall()
         {
             if (Heading <= 2 || Heading >= 358)
-                return BattleFieldHeight - Y - Height / 2;
+            {
+                if (X >= Width + 2)
+                    return BattleFieldHeight - Y - Height/2;
+                return BattleFieldHeight - Y - 3*Height/2;
+            }
             if (Heading >= 88 && Heading <= 92)
                 return BattleFieldWidth - X - Width / 2;
             if (Heading >= 178 && Heading <= 182)
-                return Y - Height / 2;
+                return Y - Height/2;
+            if (Y >= BattleFieldHeight - Height - 2)
+                return X - 3*Width/2;
             return X - Width / 2;
         }
 
