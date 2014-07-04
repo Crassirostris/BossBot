@@ -65,7 +65,15 @@ namespace BossBot
 
             SetTurnGunRight(angle);
             if (angle < TolerableFiringErrorDegrees)
-                Fire(2);
+            {
+                var power = 1 / (currentFoe.Distance / (Math.Max(BattleFieldWidth, BattleFieldHeight) - 42) * 2.7);
+                if (power > 3)
+                    power = 3;
+                if (power < 0.3)
+                    power = 0.3;
+                Out.WriteLine("Power: {0}", power);
+                Fire(power);
+            }
 
         }
 
