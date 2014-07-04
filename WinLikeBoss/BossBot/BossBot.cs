@@ -16,8 +16,6 @@ namespace BossBot
         {
             Initialize();
 
-            //SetTurnRadarLeft(double.MaxValue);
-
             moveAmount = Math.Max(BattleFieldHeight, BattleFieldWidth);
             peek = false;
 
