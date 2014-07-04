@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Threading;
 using Robocode;
 using Robocode.Util;
 
@@ -9,35 +10,47 @@ namespace BossBot
     {
         private double moveAmount;
         private double direction = 1;
-        private bool peek;
         private bool directionChanged;
+        private long lastTimeScannedFoe;
+        private const long MaximumAllowedTimeOnHold = 300;
 
         public override void Run()
         {
             Initialize();
 
             moveAmount = Math.Max(BattleFieldHeight, BattleFieldWidth);
-            peek = false;
 
             TurnLeft(Heading % 90);
             Ahead(moveAmount);
 
-            peek = true;
             TurnGunRight(90);
             TurnRight(90);
 
             while (true)
             {
+                if (Time - lastTimeScannedFoe > MaximumAllowedTimeOnHold)
+                    ReachRightWall();
+
                 if (directionChanged)
                 {
                     direction *= -1;
                     directionChanged = false;
                 }
-                peek = true;
+                Out.WriteLine("Moving by {0}", moveAmount * direction);
                 Ahead(moveAmount * direction);
-                peek = false;
+                Out.WriteLine("Turning by {0} to the right", 90 * direction);
                 TurnRight(90 * direction);
             }
+        }
+
+        private void ReachRightWall()
+        {
+            Out.WriteLine("My work is done here, going to visit right wall");
+            if (Heading < 90)
+                TurnRight(90 - Heading);
+            else
+                TurnLeft(Heading - 90);
+            Ahead(BattleFieldWidth - X - Width / 2);
         }
 
         public override void OnHitRobot(HitRobotEvent evnt)
@@ -48,7 +61,10 @@ namespace BossBot
         public override void OnScannedRobot(ScannedRobotEvent evnt)
         {
             if (IsFoe(evnt.Name))
+            {
                 Fire(2);
+                lastTimeScannedFoe = Time;
+            }
         }
 
         private bool IsFoe(string name)
