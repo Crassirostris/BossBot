@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using Robocode;
 using Robocode.Util;
 
@@ -10,10 +11,9 @@ namespace BossBot
     {
         private double direction = 1;
         private bool directionChanged;
-        private long lastTimeScannedFoe;
+        private long lastTimeScannedCurrentFoe;
         private bool isTurning;
         private bool isMoving;
-        private const double RadarTurnRate = 22;
         private const long LostTargetTime = 10;
         private const double TolerableFiringErrorDegrees = 3;
         private bool targetScanned;
@@ -31,7 +31,7 @@ namespace BossBot
         private BotInfo currentFoe;
         private bool nooneToShoot;
         private readonly Dictionary<string, BotInfo> foes = new Dictionary<string, BotInfo>();
-        private const int MaxTimeOnHoldAllowed = 10;
+        private const int MaxTimeOnHoldAllowed = 30;
 
         public override void Run()
         {
@@ -65,6 +65,7 @@ namespace BossBot
             TurnRight(90);
 
             TurnRadarLeft(360);
+
         }
 
         private void DoFiring()
@@ -77,13 +78,14 @@ namespace BossBot
             SetTurnGunRight(angle);
             if (angle < TolerableFiringErrorDegrees)
             {
-                var power = 1 / (currentFoe.Distance / (Math.Max(BattleFieldWidth, BattleFieldHeight) - 42) * 2.7);
-                if (power > 3)
-                    power = 3;
-                if (power < 0.3)
-                    power = 0.3;
-                Out.WriteLine("Power: {0}", power);
-                Fire(power);
+                var power = 1 / (currentFoe.Distance / (Math.Max(BattleFieldWidth, BattleFieldHeight) / 2 - 42) * 2);
+                if (power > 0.3)
+                {
+                    if (power > 3)
+                        power = 3;
+                    Out.WriteLine("Power: {0}", power);
+                    Fire(power);
+                }
             }
 
         }
@@ -92,23 +94,19 @@ namespace BossBot
         {
             if (currentFoe == null)
             {
-                if (Time - lastTimeScannedFoe > MaxTimeOnHoldAllowed)
+                if (Time - lastTimeScannedCurrentFoe > MaxTimeOnHoldAllowed)
                     nooneToShoot = true;
                 SetTurnRadarLeft(double.MaxValue);
                 return;
             }
 
+            var foeHeading = Utils.NormalAbsoluteAngleDegrees(Heading + currentFoe.Bearing);
+            var angle = Utils.NormalRelativeAngleDegrees(RadarHeading - foeHeading);
+            SetTurnRadarLeft(double.MaxValue * (angle > 0 ? 1 : -1));
+
             Out.WriteLine("Scanning foe {0}", currentFoe.Name);
-            if (targetScanned)
-            {
-                scanDirection *= -1;
-                targetScanned = false;
-            }
-            else if (Time - lastTimeScannedFoe > LostTargetTime)
-            {
-                currentFoe = null;
-            }
-            SetTurnLeft(RadarTurnRate * scanDirection);
+            Out.WriteLine("Foe heading  {0}", foeHeading);
+            Out.WriteLine("Angle        {0}", angle);
         }
 
         private void Move()
@@ -197,9 +195,11 @@ namespace BossBot
                 foes[evnt.Name] = info;
                 if (currentFoe == null 
                     || currentFoe.Name == evnt.Name
-                    || GetPriority(currentFoe.Name) < GetPriority(evnt.Name))
+                    || GetPriority(currentFoe.Name) < GetPriority(evnt.Name)
+                    || Time - lastTimeScannedCurrentFoe > LostTargetTime
+                    || (GetPriority(currentFoe.Name) == GetPriority(evnt.Name) && currentFoe.Distance > evnt.Distance))
                 {
-                    lastTimeScannedFoe = Time;
+                    lastTimeScannedCurrentFoe = Time;
                     currentFoe = foes[evnt.Name];
                 }
             }
