@@ -140,53 +140,53 @@ namespace BossBot
 
         private double GetDistanceToWall()
         {
-            var trackDeltas = foes.Keys
-                .Where(foeName => foeName.ToLower().Contains("track"))
-                .Select(name => new DeltaInfo(foes[name], this))
-                .ToList();
+            //var trackDeltas = foes.Keys
+            //    .Where(foeName => foeName.ToLower().Contains("track"))
+            //    .Select(name => new DeltaInfo(foes[name], this))
+            //    .ToList();
 
             if (Heading <= 2 || Heading >= 358)
             {
-                if (trackDeltas.Any(delta => X >= delta.MinX && X <= delta.MaxX && Y <= delta.MinY))
-                {
-                    Out.WriteLine("ololo");
-                    return -Y + Height/2;
-                }
+                //if (trackDeltas.Any(delta => X >= delta.MinX && X <= delta.MaxX && Y <= delta.MinY))
+                //{
+                //    Out.WriteLine("ololo");
+                //    return -Y + Height/2;
+                //}
                 if (X >= Width + 2)
                     return BattleFieldHeight - Y - Height/2;
                 return BattleFieldHeight - Y - 3*Height/2;
             }
             if (Heading >= 88 && Heading <= 92)
             {
-                if (trackDeltas.Any(delta => Y >= delta.MinY && Y <= delta.MaxY && X <= delta.MinX))
-                {
-                    {
-                        Out.WriteLine("ololo");
-                    }
-                    if (Y >= BattleFieldHeight - Height - 2)
-                        return -(X - 3 * Width / 2);
-                    return -(X - Width / 2);
-                }
+                //if (trackDeltas.Any(delta => Y >= delta.MinY && Y <= delta.MaxY && X <= delta.MinX))
+                //{
+                //    {
+                //        Out.WriteLine("ololo");
+                //    }
+                //    if (Y >= BattleFieldHeight - Height - 2)
+                //        return -(X - 3 * Width / 2);
+                //    return -(X - Width / 2);
+                //}
                 return BattleFieldWidth - X - Width/2;
             }
             if (Heading >= 178 && Heading <= 182)
             {
-                if (trackDeltas.Any(delta => X >= delta.MinX && X <= delta.MaxX && Y >= delta.MaxY))
-                {
-                    {
-                        Out.WriteLine("ololo");
-                    }
-                    if (X >= Width + 2)
-                        return -(BattleFieldHeight - Y - Height/2);
-                    return -(BattleFieldHeight - Y - 3*Height/2);
-                }
+                //if (trackDeltas.Any(delta => X >= delta.MinX && X <= delta.MaxX && Y >= delta.MaxY))
+                //{
+                //    {
+                //        Out.WriteLine("ololo");
+                //    }
+                //    if (X >= Width + 2)
+                //        return -(BattleFieldHeight - Y - Height/2);
+                //    return -(BattleFieldHeight - Y - 3*Height/2);
+                //}
                 return Y - Height/2;
             }
-            if (trackDeltas.Any(delta => Y >= delta.MinY && Y <= delta.MaxY && X >= delta.MaxX))
-            {
-                Out.WriteLine("ololo");
-                return -(BattleFieldWidth - X - Width/2);
-            }
+            //if (trackDeltas.Any(delta => Y >= delta.MinY && Y <= delta.MaxY && X >= delta.MaxX))
+            //{
+            //    Out.WriteLine("ololo");
+            //    return -(BattleFieldWidth - X - Width/2);
+            //}
             if (Y >= BattleFieldHeight - Height - 2)
                 return X - 3*Width/2;
             return X - Width / 2;
