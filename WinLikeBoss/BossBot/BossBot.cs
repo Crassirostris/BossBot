@@ -10,7 +10,6 @@ namespace BossBot
     public class BossBot : AdvancedRobot
     {
         private double direction = 1;
-        private bool directionChanged;
         private long lastTimeScannedCurrentFoe;
         private bool isTurning;
         private bool isMoving;
@@ -111,11 +110,7 @@ namespace BossBot
 
         private void Move()
         {
-            if (directionChanged)
-            {
-                direction *= -1;
-                directionChanged = false;
-            }
+            ChangeDirection();
 
             if (!isTurning && !isMoving)
             {
@@ -138,12 +133,20 @@ namespace BossBot
             }
         }
 
+        private void ChangeDirection()
+        {
+            direction *= -1;
+        }
+
+
         private double GetDistanceToWall()
         {
             var trackDeltas = foes.Keys
                 .Where(foeName => foeName.ToLower().Contains("track"))
                 .Select(name => new DeltaInfo(foes[name], this))
                 .ToList();
+
+            Out.WriteLine(trackDeltas.Count);
 
             if (Heading <= 2 || Heading >= 358)
             {
@@ -204,12 +207,12 @@ namespace BossBot
 
         public override void OnHitRobot(HitRobotEvent evnt)
         {
-            directionChanged = true;
+            ChangeDirection();
         }
 
         public override void OnHitByBullet(HitByBulletEvent evnt)
         {
-            directionChanged = true;
+            isMoving = false;
         }
 
         public override void OnBulletHit(BulletHitEvent evnt)
