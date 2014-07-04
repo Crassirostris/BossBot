@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
-using System.Threading;
 using Robocode;
 using Robocode.Util;
 
@@ -8,43 +8,43 @@ namespace BossBot
 {
     public class BossBot : AdvancedRobot
     {
-        private double moveAmount;
         private double direction = 1;
         private bool directionChanged;
         private long lastTimeScannedFoe;
         private bool isTurning;
         private bool isMoving;
-        private double radarTurnRate = 100500;
-        private const long MaximumAllowedTimeOnHold = 73;
-        private const long LostTargetTimeout = 42;
+        private const double RadarTurnRate = 22;
+        private const long LostTargetTime = 10;
         private const double TolerableFiringErrorDegrees = 3;
+        private bool targetScanned;
+        private double scanDirection = 1;
+
+        private int GetPriority(string name)
+        {
+            if (name.ToLower().Contains("track"))
+                return 2;
+            if (name.ToLower().Contains("spin"))
+                return 1;
+            return 0;
+        }
 
         private BotInfo currentFoe;
+        private bool nooneToShoot;
+        private readonly Dictionary<string, BotInfo> foes = new Dictionary<string, BotInfo>();
+        private const int MaxTimeOnHoldAllowed = 10;
 
         public override void Run()
         {
             Initialize();
 
-            SetTurnRadarLeft(radarTurnRate);
+            InitialMovements();
 
-            moveAmount = Math.Max(BattleFieldHeight, BattleFieldWidth);
-
-            TurnLeft(Heading % 90);
-            Ahead(GetDistanceToWall());
-
-            TurnGunRight(90);
-            TurnRight(90);
+            nooneToShoot = false;
 
             while (true)
             {
-                if (Time - lastTimeScannedFoe > MaximumAllowedTimeOnHold)
+                if (nooneToShoot)
                     ReachRightWall();
-
-                if (directionChanged)
-                {
-                    direction *= -1;
-                    directionChanged = false;
-                }
 
                 Move();
 
@@ -54,6 +54,17 @@ namespace BossBot
 
                 Execute();
             }
+        }
+
+        private void InitialMovements()
+        {
+            TurnLeft(Heading % 90);
+            Ahead(GetDistanceToWall());
+
+            TurnGunRight(90);
+            TurnRight(90);
+
+            TurnRadarLeft(360);
         }
 
         private void DoFiring()
@@ -81,19 +92,33 @@ namespace BossBot
         {
             if (currentFoe == null)
             {
-                SetTurnRadarLeft(radarTurnRate);
+                if (Time - lastTimeScannedFoe > MaxTimeOnHoldAllowed)
+                    nooneToShoot = true;
+                SetTurnRadarLeft(double.MaxValue);
                 return;
             }
 
             Out.WriteLine("Scanning foe {0}", currentFoe.Name);
-
-            var foeHeading = Utils.NormalAbsoluteAngleDegrees(Heading + currentFoe.Bearing);
-            var angle = Utils.NormalRelativeAngleDegrees(RadarHeading - foeHeading);
-            SetTurnRadarLeft(radarTurnRate * (angle > 0 ? 1 : -1));
+            if (targetScanned)
+            {
+                scanDirection *= -1;
+                targetScanned = false;
+            }
+            else if (Time - lastTimeScannedFoe > LostTargetTime)
+            {
+                currentFoe = null;
+            }
+            SetTurnLeft(RadarTurnRate * scanDirection);
         }
 
         private void Move()
         {
+            if (directionChanged)
+            {
+                direction *= -1;
+                directionChanged = false;
+            }
+
             if (!isTurning && !isMoving)
             {
                 isMoving = true;
@@ -147,6 +172,11 @@ namespace BossBot
             directionChanged = true;
         }
 
+        public override void OnHitByBullet(HitByBulletEvent evnt)
+        {
+            directionChanged = true;
+        }
+
         public override void OnBulletHit(BulletHitEvent evnt)
         {
             if (currentFoe != null && evnt.VictimEnergy <= 0 && evnt.VictimName == currentFoe.Name)
@@ -157,17 +187,20 @@ namespace BossBot
         {
             if (IsFoe(evnt.Name))
             {
-                lastTimeScannedFoe = Time;
-                if (currentFoe == null || currentFoe.Name == evnt.Name || Time - lastTimeScannedFoe > LostTargetTimeout)
-                {
-                    currentFoe = new BotInfo
-                    {
+                var info = new BotInfo {
                         Name = evnt.Name,
                         Bearing = evnt.Bearing,
                         Heading = evnt.Heading,
                         Distance = evnt.Distance,
                         Velocity = evnt.Velocity
                     };
+                foes[evnt.Name] = info;
+                if (currentFoe == null 
+                    || currentFoe.Name == evnt.Name
+                    || GetPriority(currentFoe.Name) < GetPriority(evnt.Name))
+                {
+                    lastTimeScannedFoe = Time;
+                    currentFoe = foes[evnt.Name];
                 }
             }
         }
