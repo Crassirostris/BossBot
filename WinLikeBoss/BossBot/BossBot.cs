@@ -264,10 +264,10 @@ namespace BossBot
     {
         public DeltaInfo(BotInfo botInfo, BossBot bossBot)
         {
-            var X = Math.Sin(botInfo.Bearing + bossBot.Heading) * botInfo.Distance;
+            var X = Math.Sin(Utils.ToRadians(botInfo.Bearing + bossBot.Heading)) * botInfo.Distance;
             MinX = X - bossBot.Width/2;
             MaxX = X + bossBot.Width/2;
-            var Y = Math.Cos(botInfo.Bearing + bossBot.Heading) * botInfo.Distance;
+            var Y = Math.Cos(Utils.ToRadians(botInfo.Bearing + bossBot.Heading)) * botInfo.Distance;
             MinY = Y - bossBot.Height/2;
             MaxY = Y + bossBot.Height/2;
         }
