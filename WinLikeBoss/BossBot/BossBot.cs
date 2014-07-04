@@ -15,8 +15,6 @@ namespace BossBot
         {
             Initialize();
 
-            //SetTurnRadarLeft(double.MaxValue);
-
             peek = false;
 
             TurnLeft(Heading % 90);
