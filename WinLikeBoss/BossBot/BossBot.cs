@@ -7,7 +7,6 @@ namespace BossBot
 {
     public class BossBot : AdvancedRobot
     {
-        private double moveAmount;
         private double direction = 1;
         private bool peek;
         private bool directionChanged;
@@ -18,12 +17,10 @@ namespace BossBot
 
             //SetTurnRadarLeft(double.MaxValue);
 
-            moveAmount = Math.Max(BattleFieldHeight, BattleFieldWidth);
             peek = false;
 
             TurnLeft(Heading % 90);
-            Ahead(moveAmount);
-
+            MoveToWall();
             peek = true;
             TurnGunRight(90);
             TurnRight(90);
@@ -36,10 +33,22 @@ namespace BossBot
                     directionChanged = false;
                 }
                 peek = true;
-                Ahead(moveAmount * direction);
+                MoveToWall();
                 peek = false;
                 TurnRight(90 * direction);
             }
+        }
+
+        private void MoveToWall()
+        {
+            if (Heading <= 2 || Heading >= 358)
+                Ahead(BattleFieldHeight - Y - Height/2);
+            else if (Heading >= 88 && Heading <= 92)
+                Ahead(BattleFieldWidth - X - Width/2);
+            else if (Heading >= 178 && Heading <= 182)
+                Ahead(Y - Height/2);
+            else
+                Ahead(X - Width/2);
         }
 
         public override void OnHitRobot(HitRobotEvent evnt)
